@@ -33,8 +33,11 @@ def test_corrupt_ledger_line_is_skipped():
 
 
 def test_markdown_report(tmp_path):
-    ledger.main(["record", "--model", "claude-opus-5-5", "--input-tokens", "500000",
-                 "--output-tokens", "50000", "--note", "big run"])
+    # two jobs of 150k input each: priced separately they stay under Gemini Pro's 200k
+    # long-context threshold, so a cheaper tier-3 option exists
+    for note in ("run 1", "run 2"):
+        ledger.main(["record", "--model", "claude-opus-5-5", "--input-tokens", "150000",
+                     "--output-tokens", "50000", "--note", note])
     out = tmp_path / "report.md"
     ledger.main(["report", "--period", "month", "--out", str(out)])
     md = out.read_text()

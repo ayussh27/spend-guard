@@ -96,8 +96,15 @@ def token_cost(
     batch: bool = False,
     on: dt.date | None = None,
 ) -> float:
-    """Cost in USD for one call. Prices in pricing.yaml are per 1M tokens."""
+    """Cost in USD for one call. Prices in pricing.yaml are per 1M tokens.
+
+    If the model has a `long_context` tier and the prompt is longer than its
+    `above_tokens`, the higher long-context prices apply to the whole request.
+    """
     p = model_price(pricing, model, on)
+    lc = p.get("long_context")
+    if lc and input_tokens > int(lc["above_tokens"]):
+        p = {**p, **{k: v for k, v in lc.items() if k != "above_tokens"}}
     cached = min(cached_input_tokens, input_tokens)
     fresh = input_tokens - cached
     cached_rate = p.get("cached_input", p["input"])

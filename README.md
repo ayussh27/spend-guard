@@ -1,5 +1,11 @@
 # spend-guard 💸🛡️
 
+[![tests](https://github.com/ayussh27/spend-guard/actions/workflows/tests.yml/badge.svg)](https://github.com/ayussh27/spend-guard/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+
+![agent-budget-guard demo: an $8 job gets blocked before it runs](assets/demo.gif)
+
 **Cost control for AI agents.** Skills that let Claude Code, Codex, Cursor and other
 agents know what they're about to spend, and stop before they overspend.
 
@@ -24,7 +30,7 @@ claude-opus-5-5: $8.00 (25 x $0.32)
 Verdict: BLOCK
   - would exceed per-task cap: $8.00 > $2.00
   - near daily cap: $8.00 of $10.00 (80%)
-  cheaper: gemini-4-argon $4.00 (saves $4.00)
+  cheaper: gemini-3.1-pro-preview $4.40 (saves $3.60)
 ```
 
 A `block` verdict means the agent stops and asks you first. `warn` means it tells you and
@@ -32,8 +38,8 @@ carries on. `ok` means it just runs.
 
 ### What it does
 
-- **Estimate.** Prices token jobs (input, output, cached input, batch discount) and
-  unit-priced tools (video credits, images). It can count tokens straight from the files
+- **Estimate.** Prices token jobs (input, output, cached input, batch discount,
+  long-context price tiers) and unit-priced tools (video credits, images). It can count tokens straight from the files
   you're about to send.
 - **Enforce.** Per-task, daily and monthly caps from a simple `budget.yaml`.
 - **Route.** Picks the cheapest model in the capability tier the task needs (1 simple,
@@ -111,8 +117,9 @@ python3 scripts/ledger.py report --period month --out spend-report.md
 
 Prices live in [`pricing.yaml`](skills/agent-budget-guard/pricing.yaml), in USD per 1M tokens.
 Each entry has a `source` and a `last_verified` date, and the estimator warns when an entry
-is more than 45 days old. **Prices change often, so check them before relying on them.**
-PRs that update prices are very welcome.
+is more than 45 days old. All current entries were checked against the official Anthropic,
+OpenAI and Google pricing pages on 2026-11-16. **Prices change often, so check them before
+relying on them.** PRs that update prices are very welcome.
 
 ## Tests
 

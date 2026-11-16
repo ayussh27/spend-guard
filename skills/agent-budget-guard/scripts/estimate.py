@@ -132,6 +132,10 @@ def compute(args) -> dict:
                         f"— check {entry.get('source', 'the provider pricing page')}")
     if args.input_tokens is None:
         warnings.append("input tokens are estimated (~4 chars/token unless tiktoken is installed)")
+    lc = entry.get("long_context")
+    if lc and in_tok > int(lc["above_tokens"]):
+        warnings.append(f"prompt is over {int(lc['above_tokens']):,} tokens, so {args.model}'s "
+                        "higher long-context prices apply to the whole request")
     if args.output_tokens is None:
         warnings.append("output tokens assumed from routing.default_output_ratio")
 

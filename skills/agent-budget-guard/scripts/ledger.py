@@ -135,15 +135,21 @@ def to_markdown(s: dict) -> str:
     for r in s["top_entries"]:
         lines.append(f"| {r['date']} | {r['model']} | {common.money(r['cost_usd'])} | {r.get('note') or ''} |")
 
-    # Savings hint: what the top model's tokens would cost on the cheapest same-tier model
+    # Savings hint: what each model's jobs would have cost on the cheapest same-tier model.
+    # Each job is priced on its own, because long-context tiers depend on per-request size.
     pricing = common.load_pricing()
+    models = pricing.get("models", {})
+    start = period_start(s["period"])
+    rows = [r for r in common.read_ledger() if dt.date.fromisoformat(r["date"]) >= start]
     hints = []
     for model, v in s["by_model"].items():
-        if model not in pricing.get("models", {}) or not v["input_tokens"]:
+        if model not in models or not v["input_tokens"]:
             continue
-        tier = pricing["models"][model]["tier"]
-        same = [(n, common.token_cost(pricing, n, v["input_tokens"], v["output_tokens"]))
-                for n, e in pricing["models"].items() if e["tier"] == tier and n != model]
+        jobs = [r for r in rows if r["model"] == model]
+        tier = models[model]["tier"]
+        same = [(n, sum(common.token_cost(pricing, n, r.get("input_tokens") or 0, r.get("output_tokens") or 0)
+                        for r in jobs))
+                for n, e in models.items() if e["tier"] == tier and n != model]
         if not same:
             continue
         name, cheaper = min(same, key=lambda x: x[1])

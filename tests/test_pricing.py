@@ -40,11 +40,29 @@ def test_cached_input_is_cheaper():
 
 
 def test_scheduled_price_change_applies_on_its_date():
-    pricing = common.load_pricing()
-    before = common.model_price(pricing, "gemini-4-argon", dt.date(2026, 11, 30))
-    after = common.model_price(pricing, "gemini-4-argon", dt.date(2026, 12, 1))
+    pricing = {"models": {"m": {
+        "provider": "x", "tier": 2, "input": 2.00, "output": 10.00,
+        "price_changes": [{"effective_from": "2026-12-01", "input": 4.00, "output": 20.00}],
+    }}}
+    before = common.model_price(pricing, "m", dt.date(2026, 11, 30))
+    after = common.model_price(pricing, "m", dt.date(2026, 12, 1))
     assert (before["input"], before["output"]) == (2.00, 10.00)
     assert (after["input"], after["output"]) == (4.00, 20.00)
+
+
+def test_long_context_prices_apply_above_threshold():
+    pricing = common.load_pricing()
+    # Haiku 5.5: $0.10/$0.50 up to 100k input tokens, $0.50/$2.50 above
+    short = common.token_cost(pricing, "claude-haiku-5-5", 100_000, 1_000_000)
+    long = common.token_cost(pricing, "claude-haiku-5-5", 100_001, 1_000_000)
+    assert short == pytest.approx(0.01 + 0.50)
+    assert long == pytest.approx(100_001 * 0.50 / 1_000_000 + 2.50)
+
+
+def test_long_context_warning_in_estimate():
+    import estimate
+    r = estimate.run(["--model", "claude-haiku-5-5", "--input-tokens", "150000", "--output-tokens", "100"])
+    assert any("long-context" in w for w in r["warnings"])
 
 
 def test_unknown_model_raises_helpful_error():
