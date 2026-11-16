@@ -1,0 +1,29 @@
+# agent-budget-guard — your spending policy
+#
+# Copy this file to your project root (or set BUDGET_GUARD_CONFIG=/path/to/budget.yaml)
+# to override these defaults.
+
+caps:
+  per_task_usd: 2.00      # one estimated job above this is BLOCKED
+  daily_usd: 10.00        # total recorded spend today; at/above this, new jobs are BLOCKED
+  monthly_usd: 100.00     # total recorded spend this month
+  warn_at_fraction: 0.8   # WARN when a job would take you past 80% of a cap
+
+routing:
+  # Only route to these providers (empty list = all providers allowed)
+  allowed_providers: []
+  # Never route to these model ids
+  blocked_models: []
+  # Assumed output size relative to input when the caller doesn't give one
+  default_output_ratio: 0.5
+
+hooks:
+  # Claude Code PreToolUse hook: tool names (regex) that count as "expensive".
+  # When today's recorded spend has reached caps.daily_usd, these are blocked.
+  watch_tools:
+    - "mcp__.*generate_(video|image|audio).*"
+    - "mcp__.*(render|upscale).*"
+  # Bash commands (regex) that count as expensive, e.g. your own batch scripts
+  watch_bash:
+    - "\\bbatch_generate\\b"
+    - "\\brender_video\\b"
