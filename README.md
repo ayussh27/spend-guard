@@ -63,7 +63,7 @@ carries on. `ok` means it just runs.
 **Claude Code (or any agent that supports the Agent Skills format):**
 
 ```bash
-git clone https://github.com/<your-username>/spend-guard.git
+git clone https://github.com/ayussh27/spend-guard.git
 cp -r spend-guard/skills/agent-budget-guard ~/.claude/skills/
 pip install pyyaml
 ```
